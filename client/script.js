@@ -23,7 +23,7 @@ function typeText(element, text) {
 
   let interval = setInterval(() => {
     if (index < text.length) {
-      element.innerHTML += text.chartAt(index);
+      element.innerHTML += text.charAt(index);
       index++;
     } else {
       clearInterval(interval);
@@ -40,16 +40,64 @@ function generateUniqueId() {
 }
 
 function chatStripe(isAi, value, uniqueId) {
-  return `
-    <div class='wrapper ${isAi && "ai"}>
-    <div class="chat"> 
-    <div className="profile> 
-    <img 
-    src="${isAi ? bot : user}"
-    />
-    
+  return (
+    `
+    <div class="wrapper ${isAi ? "ai" : ""}">
+      <div class="chat"> 
+        <div class="profile"> 
+          <img 
+          src="${isAi ? bot : user}"
+          alt ="${isAi ? 'bot' : 'user'}"
+          />
+        </div>
+        <div class="message" id=${uniqueId}>${value}</div>
+      </div>
     </div>
-    </div>
-    </div>
-    `;
+    `
+  )
 }
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const data = new FormData(form);
+  //user's chatstripe 
+  chatContainer.innerHTML += chatStripe(false, data.get('prompt'));
+
+  form.reset();
+  //bot's chatstripe
+  const uniqueId = generateUniqueId();
+  chatContainer.innerHTML += chatStripe(true, "Loading...", uniqueId);
+
+  const messageDiv = document.getElementById(uniqueId);
+  loader(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  try {
+    const response = await fetch('http://localhost:5000/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        prompt: data.get('prompt')
+      })
+    });
+    clearInterval(loadInterval);
+    messageDiv.innerHTML = '';
+    if (response.ok) {
+      const responseData = await response.json();
+      typeText(messageDiv, responseData.bot.trim());
+    } else {
+      throw new Error('Network response was not ok.');
+    }
+  } catch (error) {
+    messageDiv.innerHTML = "Something went wrong: " + error.message;
+  }
+};
+
+form.addEventListener('submit', handleSubmit);
+form.addEventListener('keyup', (e) => {
+  if (e.keyCode === 13) {
+    handleSubmit(e);
+  }
+})
+
