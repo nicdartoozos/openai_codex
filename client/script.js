@@ -28,7 +28,7 @@ function typeText(element, text) {
     } else {
       clearInterval(interval);
     }
-  }, 20);
+  }, 70);
 }
 
 function generateUniqueId() {
@@ -36,7 +36,7 @@ function generateUniqueId() {
   const randomNumber = Math.random();
   const hexadecimalString = randomNumber.toString(16);
 
-  return "id-${timestamp}-${hexadecimalString}";
+  return `id-${timestamp}-${hexadecimalString}`;
 }
 
 function chatStripe(isAi, value, uniqueId) {
@@ -72,7 +72,7 @@ const handleSubmit = async (e) => {
   loader(messageDiv);
   chatContainer.scrollTop = chatContainer.scrollHeight;
   try {
-    const response = await fetch('http://localhost:5000/', {
+    const response = await fetch('http://localhost:5001/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -85,6 +85,7 @@ const handleSubmit = async (e) => {
     messageDiv.innerHTML = '';
     if (response.ok) {
       const responseData = await response.json();
+      console.log(responseData)
       typeText(messageDiv, responseData.bot.trim());
     } else {
       throw new Error('Network response was not ok.');
